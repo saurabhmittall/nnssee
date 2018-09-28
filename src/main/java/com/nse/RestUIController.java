@@ -39,14 +39,12 @@ public class RestUIController {
 	public String download(HttpServletRequest request, HttpServletResponse response,
 			@RequestParam(value = "k", defaultValue = "") String key,
 			@RequestParam(value = "day", defaultValue = "0") int day) {
-		FileOperation file = new FileOperation();
-		file.downloadFile(day);
+		app.downloadFile( day);
 		String contentType = "text/html;charset=UTF-8";
 		response.setContentType(contentType);
 		try {
 			request.setCharacterEncoding("utf-8");
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -59,9 +57,9 @@ public class RestUIController {
 	public String download(HttpServletRequest request, HttpServletResponse response,
 			@RequestParam(value = "day1", defaultValue = "0") int day1,
 			@RequestParam(value = "day2", defaultValue = "0") int day2) {
-		FileOperation file = new FileOperation();
+	
 		for (; day1 < day2; day1++)
-			file.downloadFile(day1);
+			app.downloadFile( day1);
 		String contentType = "text/html;charset=UTF-8";
 		response.setContentType(contentType);
 		try {
@@ -76,13 +74,10 @@ public class RestUIController {
 		return "fine";
 	}
 
-	@RequestMapping("/dbinsert")
+	@RequestMapping("/unZip")
 	public String dbinsert(HttpServletRequest request, HttpServletResponse response) {
 
-		String localPath = Constant.localUrl;
-		System.out.println("download done");
-		FileOperation file = new FileOperation();
-		String[] list = file.getLocalFileListSortOnName(localPath);
+		app.UnZip();
 		return "done";
 	}
 }

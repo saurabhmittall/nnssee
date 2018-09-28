@@ -1,5 +1,7 @@
 package sm.nse.util;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -64,10 +66,15 @@ public class Utility {
 	}
 
 	public static String datetoString(String pattern, int currentMinus) {
+		
+		pattern=pattern.trim();
+		
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DAY_OF_MONTH, currentMinus);
+		
 		DateFormat dateFormat = new SimpleDateFormat(pattern);
 		String strDate = dateFormat.format(cal.getTime());
+
 		return strDate;
 
 	}
@@ -123,5 +130,24 @@ public class Utility {
 		}
 		return date;
 	}
+	public String[] getLocalZipFileListSortOnName(String localPath) {
+		File f = null;
+		String[] paths = null;
+		try {
 
+			f = new File(localPath);
+
+			paths = f.list(new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					return name.toLowerCase().endsWith(".zip");
+				}
+			});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if(paths!=null)
+		Arrays.sort(paths);
+
+		return paths;
+	}
 }

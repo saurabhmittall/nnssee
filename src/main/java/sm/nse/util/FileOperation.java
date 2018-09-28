@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.nse.Constant;
-
 
 public class FileOperation {
 	public static void main(String[] args) {
@@ -30,19 +28,21 @@ public class FileOperation {
 	}
 
 	@SuppressWarnings("restriction")
-	public int downloadFile(int dayDiff) {
+	public int downloadFile(int dayDiff,String urlString,String localPath,String dateFormat) {
 		System.setProperty("java.protocol.handler.pkgs", "com.sun.net.ssl.internal.www.protocol");
 		Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-		String dd = Utility.datetoString("ddMMyy", dayDiff);
-		// https://www.nseindia.com/archives/fo/mkt/fo06042018.zip
-		// String urlStr = "https://www.nseindia.com/archives/fo/bhav/fo" + dd + ".zip";
-		String urlStr = "	https://www.nseindia.com/archives/equities/bhavcopy/pr/PR" + dd + ".zip";
+		String dd = Utility.datetoString(dateFormat, dayDiff);
+	
+		String urlStr = urlString.replaceAll(dateFormat, dd);
 		System.out.println("urlStr=" + urlStr);
+	
+		String fileName=urlStr.substring(urlStr.lastIndexOf("/"));
 		try {
 			URL url = new URL(urlStr);
 			ReadableByteChannel rbc = Channels.newChannel(url.openStream());
 			BufferedInputStream bis = new BufferedInputStream(url.openStream()); 
-			FileOutputStream fis = new FileOutputStream(Constant.localUrl+"fo" + dd + ".zip");
+			
+			FileOutputStream fis = new FileOutputStream(localPath+fileName);
 			byte[] buffer = new byte[1024];
 			int count = 0;
 			while ((count = bis.read(buffer, 0, 1024)) != -1) {
@@ -84,11 +84,11 @@ public class FileOperation {
 
 	}
 
-	public int coypFileArchive(String localBaseDir, String zipFile, String archivelocalBaseDir) {
+	 int coypFileArchive(String localBaseDir, String zipFile, String archiveLocalBaseDir) {
 		try {
 
 			Path sourcePath = Paths.get(localBaseDir + "/" + zipFile);
-			Path destinationPath = Paths.get(archivelocalBaseDir + "/" + zipFile);
+			Path destinationPath = Paths.get(archiveLocalBaseDir + "/" + zipFile);
 
 			Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
@@ -98,8 +98,8 @@ public class FileOperation {
 		return 1;
 	}
 
-	public List<String> unZipIt(String localBaseDir, String zipFile, String backupFolder) {
-		System.out.println("localBaseDir=" + localBaseDir);
+	public List<String> unZipIt(String localPath, String zipFile, String archiveLocalBaseDir) {
+		System.out.println("localPath=" + localPath);
 		System.out.println("zipFile=" + zipFile);
 		List<String> nameFiles = new ArrayList<String>();
 		byte[] buffer = new byte[10240];
@@ -108,7 +108,7 @@ public class FileOperation {
 			if (zipFile == null || !zipFile.contains("zip"))
 				return null;
 
-			String outputFolder = localBaseDir + zipFile.substring(0, zipFile.indexOf("."));
+			String outputFolder = localPath + zipFile.substring(0, zipFile.indexOf("."));
 
 			// create output directory is not exists
 			File folder = new File(outputFolder);
@@ -117,7 +117,7 @@ public class FileOperation {
 			}
 
 			// get the zip file content
-			ZipInputStream zis = new ZipInputStream(new FileInputStream(localBaseDir + zipFile));
+			ZipInputStream zis = new ZipInputStream(new FileInputStream(localPath + zipFile));
 			// get the zipped file list entry
 			ZipEntry ze = zis.getNextEntry();
 
@@ -150,7 +150,7 @@ public class FileOperation {
 			zis.closeEntry();
 			zis.close();
 
-			coypFileArchive(localBaseDir, zipFile, backupFolder);
+			coypFileArchive(localPath, zipFile, archiveLocalBaseDir);
 
 		} catch (IOException ex) {
 			ex.printStackTrace();

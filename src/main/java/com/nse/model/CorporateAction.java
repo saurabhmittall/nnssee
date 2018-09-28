@@ -43,9 +43,7 @@ public class CorporateAction {
 	@Column(name = "CREATEDATE")
 	Date createDate;
 
-	public CorporateAction(com.nse.csv.CorporateAction animeDTO) {
-		// TODO Auto-generated constructor stub
-	}
+
 
 	public String toString() {
 		return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);
