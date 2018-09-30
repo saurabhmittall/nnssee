@@ -26,7 +26,7 @@ public class ETLTableMaster {
 	@Column(name = "NSEURLPattern")
 	String nseUrlPattern;
 	@Column(name = "NseUrlFileType")
-	String nseUrlFileType;
+	String fileExtension;
 	@Column(name = "NseNameFileType")
 	String nseNameFileType;
 	@Column(name = "status")
@@ -62,11 +62,12 @@ public class ETLTableMaster {
 	public void setNseUrlPattern(String nseUrlPattern) {
 		this.nseUrlPattern = nseUrlPattern;
 	}
-	public String getNseUrlFileType() {
-		return nseUrlFileType;
+	
+	public String getFileExtension() {
+		return fileExtension;
 	}
-	public void setNseUrlFileType(String nseUrlFileType) {
-		this.nseUrlFileType = nseUrlFileType;
+	public void setFileExtension(String fileExtension) {
+		this.fileExtension = fileExtension;
 	}
 	public String getNseNameFileType() {
 		return nseNameFileType;

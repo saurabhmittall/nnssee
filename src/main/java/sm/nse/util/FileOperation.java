@@ -84,7 +84,7 @@ public class FileOperation {
 
 	}
 
-	 int coypFileArchive(String localBaseDir, String zipFile, String archiveLocalBaseDir) {
+	 public int coypFileArchive(String localBaseDir, String zipFile, String archiveLocalBaseDir) {
 		try {
 
 			Path sourcePath = Paths.get(localBaseDir + "/" + zipFile);
@@ -150,7 +150,7 @@ public class FileOperation {
 			zis.closeEntry();
 			zis.close();
 
-			coypFileArchive(localPath, zipFile, archiveLocalBaseDir);
+		
 
 		} catch (IOException ex) {
 			ex.printStackTrace();

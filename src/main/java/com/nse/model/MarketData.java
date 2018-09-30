@@ -1,6 +1,7 @@
 package com.nse.model;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -18,8 +19,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import sm.nse.util.Utility;
 
 @Entity
-@Table(name = "CorporateBonds")
-public class CorporateBonds {
+@Table(name = "MarketData")
+public class MarketData {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
@@ -35,25 +36,29 @@ public class CorporateBonds {
 	double highPrice;
 	@Column(name = "LOW_PRICE")
 	double lowPrice;
-
 	@Column(name = "CLOSE_PRICE")
 	double closePrice;
+
 	@Column(name = "NET_TRDVAL")
 	double netTradedValue;
 	@Column(name = "NET_TRDQTY")
-	long tradedQty;
+	double netTradedQty;
+	
+	@Column(name = "IND_SEC")
+	String indSec;
 	@Column(name = "CORP_IND")
-	double corpInd;
+	String corpInd;
 	@Column(name = "TRADES")
-	long trades;
+	double trades;
 	@Column(name = "HI_52_WK")
-	double hi52wk;
+	double week52High;
 	@Column(name = "LO_52_WK")
-	double lo52wk;
+	double week52Low;
+
 	@Column(name = "CREATEDATE")
 	Date createDate;
 
-	public CorporateBonds(SecurityMaster securityMaster, Date createDate, String[] dataCsvRow) {
+	public MarketData(SecurityMaster securityMaster, Date createDate, String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;
 		this.previousClosePrice = Utility.parseDouble(dataCsvRow[0]);
@@ -62,12 +67,13 @@ public class CorporateBonds {
 		this.lowPrice = Utility.parseDouble(dataCsvRow[3]);
 		this.closePrice = Utility.parseDouble(dataCsvRow[4]);
 		this.netTradedValue = Utility.parseDouble(dataCsvRow[5]);
-		this.tradedQty = Utility.parseLong(dataCsvRow[6]);
-		this.corpInd = Utility.parseDouble(dataCsvRow[7]);
-		this.trades = Utility.parseLong(dataCsvRow[8]);
-		this.hi52wk = Utility.parseDouble(dataCsvRow[9]);
-		this.lo52wk = Utility.parseDouble(dataCsvRow[10]);
+		this.netTradedQty = Utility.parseInteger(dataCsvRow[6]);
+		this.indSec = dataCsvRow[7];
 
+		this.corpInd = dataCsvRow[8];
+		this.trades = Utility.parseDouble(dataCsvRow[9]);
+		this.week52High = Utility.parseDouble(dataCsvRow[10]);
+		this.week52Low = Utility.parseDouble(dataCsvRow[11]);
 	}
 
 	public String toString() {
@@ -106,7 +112,14 @@ public class CorporateBonds {
 		this.openPrice = openPrice;
 	}
 
-	
+	public double getHighPrice() {
+		return highPrice;
+	}
+
+	public void setHighPrice(double highPrice) {
+		this.highPrice = highPrice;
+	}
+
 	public double getLowPrice() {
 		return lowPrice;
 	}
@@ -123,16 +136,6 @@ public class CorporateBonds {
 		this.closePrice = closePrice;
 	}
 
-	
-
-	public double getHighPrice() {
-		return highPrice;
-	}
-
-	public void setHighPrice(double highPrice) {
-		this.highPrice = highPrice;
-	}
-
 	public double getNetTradedValue() {
 		return netTradedValue;
 	}
@@ -141,44 +144,44 @@ public class CorporateBonds {
 		this.netTradedValue = netTradedValue;
 	}
 
-	public long getTradedQty() {
-		return tradedQty;
+	public String getIndSec() {
+		return indSec;
 	}
 
-	public void setTradedQty(long tradedQty) {
-		this.tradedQty = tradedQty;
+	public void setIndSec(String indSec) {
+		this.indSec = indSec;
 	}
 
-	public double getCorpInd() {
+	public String getCorpInd() {
 		return corpInd;
 	}
 
-	public void setCorpInd(double corpInd) {
+	public void setCorpInd(String corpInd) {
 		this.corpInd = corpInd;
 	}
 
-	public long getTrades() {
+	public double getTrades() {
 		return trades;
 	}
 
-	public void setTrades(long trades) {
+	public void setTrades(double trades) {
 		this.trades = trades;
 	}
 
-	public double getHi52wk() {
-		return hi52wk;
+	public double getWeek52High() {
+		return week52High;
 	}
 
-	public void setHi52wk(double hi52wk) {
-		this.hi52wk = hi52wk;
+	public void setWeek52High(double week52High) {
+		this.week52High = week52High;
 	}
 
-	public double getLo52wk() {
-		return lo52wk;
+	public double getWeek52Low() {
+		return week52Low;
 	}
 
-	public void setLo52wk(double lo52wk) {
-		this.lo52wk = lo52wk;
+	public void setWeek52Low(double week52Low) {
+		this.week52Low = week52Low;
 	}
 
 	public Date getCreateDate() {

@@ -15,6 +15,10 @@ import javax.persistence.Table;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.nse.constant.Constant;
+
+import sm.nse.util.Utility;
+
 @Entity
 @Table(name = "BoardMeetings")
 public class BoardMeetings {
@@ -32,6 +36,14 @@ public class BoardMeetings {
 
 	@Column(name = "CREATEDATE")
 	Date createDate;
+
+	public BoardMeetings(SecurityMaster securityMaster, Date createDate,String[] dataCsvRow) {
+		this.securityMaster = securityMaster;
+		this.createDate = createDate;
+		this.bmDate = Utility.parseDate(dataCsvRow[0],Constant.DateFormat.sf);
+		this.purpose = dataCsvRow[1];
+		
+	}
 
 	public String toString() {
 		return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);

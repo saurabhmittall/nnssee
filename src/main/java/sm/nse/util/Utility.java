@@ -20,11 +20,11 @@ public class Utility {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//OPTIDXNIFTY24-JUN-2021CE11200 OPTIDXFTSE10021-SEP-2018PE8000
+		// OPTIDXNIFTY24-JUN-2021CE11200 OPTIDXFTSE10021-SEP-2018PE8000
 		String str = "OPTIDXFTSE10021-SEP-2018PE8000";
 		List<String> res = splitName(str);
-		for(String rr:res)
-			System.out.println("aa="+rr);
+		for (String rr : res)
+			System.out.println("aa=" + rr);
 
 	}
 
@@ -49,11 +49,12 @@ public class Utility {
 				callType = "PE";
 				index = peIndex;
 			}
-			System.out.println("str="+str+",,index="+index);
-			if(index==-1)return res;
-			String expiry=str.substring(index-11, index);
-			price=str.substring(index+2);
-			String symbol=str.substring(0,index-11);
+			System.out.println("str=" + str + ",,index=" + index);
+			if (index == -1)
+				return res;
+			String expiry = str.substring(index - 11, index);
+			price = str.substring(index + 2);
+			String symbol = str.substring(0, index - 11);
 			res.add(symbol);
 			res.add(callType);
 			res.add(expiry);
@@ -66,12 +67,12 @@ public class Utility {
 	}
 
 	public static String datetoString(String pattern, int currentMinus) {
-		
-		pattern=pattern.trim();
-		
+
+		pattern = pattern.trim();
+
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DAY_OF_MONTH, currentMinus);
-		
+
 		DateFormat dateFormat = new SimpleDateFormat(pattern);
 		String strDate = dateFormat.format(cal.getTime());
 
@@ -103,7 +104,6 @@ public class Utility {
 
 	}
 
-	
 	public static String removeHtmlTags(String desc) {
 		org.jsoup.nodes.Document doc = Jsoup.parse(desc);
 		if (doc != null) {
@@ -111,10 +111,12 @@ public class Utility {
 		}
 		return "";
 	}
+
 	public static String removeJunkChar(String desc) {
 		desc = desc.replace("â", "").replace("&amp;", "").replace("#039;", "");
 		return desc;
 	}
+
 	public static Date parseDate(String DateStr, String rssDateFormatStr) throws ParseException {
 
 		Date date = null;
@@ -130,6 +132,7 @@ public class Utility {
 		}
 		return date;
 	}
+
 	public String[] getLocalZipFileListSortOnName(String localPath) {
 		File f = null;
 		String[] paths = null;
@@ -145,9 +148,52 @@ public class Utility {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		if(paths!=null)
-		Arrays.sort(paths);
+		if (paths != null)
+			Arrays.sort(paths);
 
 		return paths;
 	}
+
+	public static Date parseDate(String dateStr, SimpleDateFormat sf) {
+		Date date = null;
+		try {
+			date = sf.parse(dateStr.trim());
+		} catch (Exception e) {
+			
+		}
+		return date;
+	}
+
+	public static double parseDouble(String string) {
+		double doub = 0;
+		try {
+			doub = Double.parseDouble(string);
+		} catch (Exception r) {
+		}
+		return doub;
+	}
+
+	public static int parseInteger(String string) {
+		int doub = 0;
+		try {
+			doub = Integer.parseInt(string);
+		} catch (Exception r) {
+		}
+		return doub;
+	}
+	public static long parseLong(String string) {
+		long doub = 0;
+		try {
+			doub = Long.parseLong(string);
+		} catch (Exception r) {
+		}
+		return doub;
+	}
+	public static <T> T[] subArray(T[] array,int beg,int end) {
+		return Arrays.copyOfRange(array, beg,end+1);
+}
+	public static <T> T[] subArray(T[] array,int beg) {
+		int end=array.length;
+		return Arrays.copyOfRange(array, beg,end+1);
+}
 }

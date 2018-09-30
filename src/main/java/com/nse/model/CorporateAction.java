@@ -9,11 +9,17 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.nse.constant.Constant;
+
+import sm.nse.util.Utility;
 
 @Entity
 @Table(name = "CorporateAction")
@@ -22,7 +28,7 @@ public class CorporateAction {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
 
-	@OneToOne(cascade = CascadeType.ALL)
+	@ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "companyId")
 	SecurityMaster securityMaster;
 	@Column(name = "RECORD_DT")
@@ -35,7 +41,7 @@ public class CorporateAction {
 	Date exDate;
 	
 	@Column(name = "ND_STRT_DT")
-	Date ndstartDate;
+	Date ndStartDate;
 	@Column(name = "ND_END_DT")
 	Date ndEndDate;
 	@Column(name = "PURPOSE")
@@ -44,6 +50,19 @@ public class CorporateAction {
 	Date createDate;
 
 
+
+	public CorporateAction(SecurityMaster securityMaster,Date createDate,String[] dataCsvRow) {
+		this.securityMaster = securityMaster;
+		this.createDate = createDate;
+		this.recordDT= Utility.parseDate(dataCsvRow[0],Constant.DateFormat.sf);
+		this.startDate=Utility.parseDate(dataCsvRow[1],Constant.DateFormat.sf);
+		this.endDate=Utility.parseDate(dataCsvRow[2],Constant.DateFormat.sf);
+		this.exDate=Utility.parseDate(dataCsvRow[3],Constant.DateFormat.sf);
+		this.ndStartDate=Utility.parseDate(dataCsvRow[4],Constant.DateFormat.sf);
+		this.ndEndDate=Utility.parseDate(dataCsvRow[5],Constant.DateFormat.sf);
+		this.purpose=dataCsvRow[6];
+		
+	}
 
 	public String toString() {
 		return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);
@@ -97,12 +116,14 @@ public class CorporateAction {
 		this.exDate = exDate;
 	}
 
-	public Date getNdstartDate() {
-		return ndstartDate;
+	
+
+	public Date getNdStartDate() {
+		return ndStartDate;
 	}
 
-	public void setNdstartDate(Date ndstartDate) {
-		this.ndstartDate = ndstartDate;
+	public void setNdStartDate(Date ndStartDate) {
+		this.ndStartDate = ndStartDate;
 	}
 
 	public Date getNdEndDate() {
