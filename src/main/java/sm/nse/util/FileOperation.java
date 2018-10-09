@@ -1,11 +1,16 @@
 package sm.nse.util;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -158,6 +163,37 @@ public class FileOperation {
 		}
 
 		return nameFiles;
+	}
+
+	public void downloadHtml(String urlString, String localPath) {
+		try { 
+			  
+            // Create URL object 
+            URL url = new URL(urlString); 
+            BufferedReader readr =  
+              new BufferedReader(new InputStreamReader(url.openStream())); 
+              BufferedWriter writer =  
+              new BufferedWriter(new FileWriter(localPath)); 
+              
+            // read each line from stream till end 
+            String line; 
+            while ((line = readr.readLine()) != null) { 
+                writer.write(line); 
+            } 
+  
+            readr.close(); 
+            writer.close(); 
+            System.out.println("Successfully Downloaded."); 
+        } 
+  
+        // Exceptions 
+        catch (MalformedURLException mue) { 
+            System.out.println("Malformed URL Exception raised"); 
+        } 
+        catch (IOException ie) { 
+            System.out.println("IOException raised"); 
+        } 
+		
 	}
 
 }

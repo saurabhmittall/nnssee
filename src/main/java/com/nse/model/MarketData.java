@@ -42,14 +42,14 @@ public class MarketData {
 	@Column(name = "NET_TRDVAL")
 	double netTradedValue;
 	@Column(name = "NET_TRDQTY")
-	double netTradedQty;
+	long netTradedQty;
 	
 	@Column(name = "IND_SEC")
 	String indSec;
 	@Column(name = "CORP_IND")
 	String corpInd;
 	@Column(name = "TRADES")
-	double trades;
+	long trades;
 	@Column(name = "HI_52_WK")
 	double week52High;
 	@Column(name = "LO_52_WK")
@@ -57,7 +57,7 @@ public class MarketData {
 
 	@Column(name = "CREATEDATE")
 	Date createDate;
-
+	public MarketData() {}
 	public MarketData(SecurityMaster securityMaster, Date createDate, String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;
@@ -67,11 +67,11 @@ public class MarketData {
 		this.lowPrice = Utility.parseDouble(dataCsvRow[3]);
 		this.closePrice = Utility.parseDouble(dataCsvRow[4]);
 		this.netTradedValue = Utility.parseDouble(dataCsvRow[5]);
-		this.netTradedQty = Utility.parseInteger(dataCsvRow[6]);
+		this.netTradedQty = Utility.parseLong(dataCsvRow[6]);
 		this.indSec = dataCsvRow[7];
 
 		this.corpInd = dataCsvRow[8];
-		this.trades = Utility.parseDouble(dataCsvRow[9]);
+		this.trades = Utility.parseLong(dataCsvRow[9]);
 		this.week52High = Utility.parseDouble(dataCsvRow[10]);
 		this.week52Low = Utility.parseDouble(dataCsvRow[11]);
 	}
@@ -160,11 +160,11 @@ public class MarketData {
 		this.corpInd = corpInd;
 	}
 
-	public double getTrades() {
+	public long getTrades() {
 		return trades;
 	}
 
-	public void setTrades(double trades) {
+	public void setTrades(long trades) {
 		this.trades = trades;
 	}
 
@@ -190,6 +190,14 @@ public class MarketData {
 
 	public void setCreateDate(Date createDate) {
 		this.createDate = createDate;
+	}
+
+	public long getNetTradedQty() {
+		return netTradedQty;
+	}
+
+	public void setNetTradedQty(long netTradedQty) {
+		this.netTradedQty = netTradedQty;
 	}
 
 }

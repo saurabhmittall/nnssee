@@ -36,7 +36,7 @@ public class BoardMeetings {
 
 	@Column(name = "CREATEDATE")
 	Date createDate;
-
+	public BoardMeetings() {}
 	public BoardMeetings(SecurityMaster securityMaster, Date createDate,String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;

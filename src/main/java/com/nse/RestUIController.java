@@ -35,9 +35,25 @@ public class RestUIController {
 		return "fine";
 	}
 
+	@RequestMapping("/calculate")
+	public String ndex(HttpServletRequest request, HttpServletResponse response) {
+
+		String contentType = "text/html;charset=UTF-8";
+		response.setContentType(contentType);
+		try {
+			request.setCharacterEncoding("utf-8");
+			app.calculateDaily();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	response.setCharacterEncoding("utf-8");
+
+		return "fine";
+	}
+
 	@RequestMapping("/download")
 	public String download(HttpServletRequest request, HttpServletResponse response,
-			@RequestParam(value = "k", defaultValue = "") String key,
+		
 			@RequestParam(value = "day", defaultValue = "0") int day) {
 		app.downloadFile( day);
 		String contentType = "text/html;charset=UTF-8";
@@ -57,9 +73,12 @@ public class RestUIController {
 	public String download(HttpServletRequest request, HttpServletResponse response,
 			@RequestParam(value = "day1", defaultValue = "0") int day1,
 			@RequestParam(value = "day2", defaultValue = "0") int day2) {
-	
-		for (; day1 < day2; day1++)
+	if(day1>0)
+	{	day1=day1-1;
+	day1=-day1;}
+		for (; day1 <= day2; day1++)
 			app.downloadFile( day1);
+		
 		String contentType = "text/html;charset=UTF-8";
 		response.setContentType(contentType);
 		try {
@@ -78,6 +97,12 @@ public class RestUIController {
 	public String dbinsert(HttpServletRequest request, HttpServletResponse response) {
 
 		app.UnZip();
+		return "done";
+	}
+	@RequestMapping("/shareH")
+	public String shareH(HttpServletRequest request, HttpServletResponse response) {
+
+		app.download1File();
 		return "done";
 	}
 }

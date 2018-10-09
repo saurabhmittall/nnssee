@@ -31,6 +31,17 @@ public class SecurityMaster {
 	Date createDate;
 	@Column(name = "SecType")
 	String secType;
+	@Column(name = "BSESecurityCode")
+	String bseCode;
+	@Column(name = "BSESecurityId")
+	String bseId;
+	@Column(name = "FaceValue")
+	String faceValue;
+	@Column(name = "ISINNo")
+	String isinNo;
+	@Column(name = "Industry")
+	String industry;
+	
 	public SecurityMaster()
 	{
 		
@@ -117,6 +128,36 @@ public class SecurityMaster {
 
 	public void setSecType(String secType) {
 		this.secType = secType;
+	}
+	public String getBseCode() {
+		return bseCode;
+	}
+	public void setBseCode(String bseCode) {
+		this.bseCode = bseCode;
+	}
+	public String getBseId() {
+		return bseId;
+	}
+	public void setBseId(String bseId) {
+		this.bseId = bseId;
+	}
+	public String getFaceValue() {
+		return faceValue;
+	}
+	public void setFaceValue(String faceValue) {
+		this.faceValue = faceValue;
+	}
+	public String getIsinNo() {
+		return isinNo;
+	}
+	public void setIsinNo(String isinNo) {
+		this.isinNo = isinNo;
+	}
+	public String getIndustry() {
+		return industry;
+	}
+	public void setIndustry(String industry) {
+		this.industry = industry;
 	}
 
 }

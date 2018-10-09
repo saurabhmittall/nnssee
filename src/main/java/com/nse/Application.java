@@ -1,21 +1,23 @@
 package com.nse;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import org.springframework.batch.core.scope.context.SynchronizationManagerSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.nse.constant.Constant;
-import com.nse.model.Announcements;
-import com.nse.model.BoardMeetings;
+import com.nse.model.Analytics;
 import com.nse.model.CorporateAction;
 import com.nse.model.CorporateBonds;
 import com.nse.model.ETLMaster;
@@ -24,6 +26,7 @@ import com.nse.model.Etf;
 import com.nse.model.EtlColMap;
 import com.nse.model.MarketData;
 import com.nse.model.SecurityMaster;
+import com.nse.repository.AnalyticsRepository;
 import com.nse.repository.AnnouncementsRepository;
 import com.nse.repository.BoardMeetingsRepository;
 import com.nse.repository.CorporateActionRepository;
@@ -34,6 +37,9 @@ import com.nse.repository.EtfRepository;
 import com.nse.repository.EtlColMapRepository;
 import com.nse.repository.MarketDataRepository;
 import com.nse.repository.SecurityMasterRepository;
+import com.nse.thread.MyMonitorThread;
+import com.nse.thread.RejectedExecutionHandlerImpl;
+import com.nse.thread.WorkerThread;
 
 import sm.nse.util.CsvReader;
 import sm.nse.util.FileOperation;
@@ -61,6 +67,8 @@ public class Application {
 	EtfRepository etfRepository;
 	@Autowired
 	MarketDataRepository marketDataRepository;
+	@Autowired
+	AnalyticsRepository analyticsRepository;
 
 	static Map<String, ETLMaster> etlMaster = null;
 	static Map<String, EtlColMap> etlColMap = null;
@@ -115,8 +123,7 @@ public class Application {
 	public void UnZip() {
 		if (etlMaster == null)
 			loadETLData();
-		CsvReader csvReader = new CsvReader();
-		FileOperation file = new FileOperation();
+
 		System.out.println("list Zip Called..");
 		Utility util = new Utility();
 
@@ -127,143 +134,343 @@ public class Application {
 			e.printStackTrace();
 		}
 		if (list != null) {
-			for (String fileName : list) {
-				System.out.println("fileName:" + fileName);
-				String dir = fileName.replace(".zip", "");
-				String dateStr = dir.substring(2);
+			for (int i = 0; i < list.length; i++) {
+				String fileName = list[i];
+				callfileDB(i, fileName);
 
-				Date createDate = Utility.parseDate(dateStr, Constant.DateFormat.ddMMYY);
-				System.out.println("dateStr=" + dateStr + "==" + createDate);
+			}
+		}
+	}
 
-				List<String> unZipFileInfolder = file.unZipIt(etlMaster.get("localPath").getValue(), fileName,
-						etlMaster.get("archiveLocalBaseDir").getValue());
-				for (ETLTableMaster table : etlTableMasterList) {
-					if (table.getFileExtension().equals("CSV")) {
-						String csvFile = table.getNseNamePattern().replace("DDMMYY", dateStr);
+	public void callfileDB(int i, String fileName) {
+		CsvReader csvReader = new CsvReader();
+		FileOperation file = new FileOperation();
+		System.out.println("fileName:" + fileName);
+		String dir = fileName.replace(".zip", "");
+		String dateStr = dir.substring(2);
 
-						List<String[]> dataCsv = csvReader
-								.makeFileList(etlMaster.get("localPath").getValue() + dir + "/" + csvFile);
-						int row = 0;
-						System.out.println("dataCsv=" + dataCsv.size());
-						for (String[] dataCsvRow : dataCsv) {
-							System.out.print("," + row);
-							// for (String s : dataCsvRow)
-							// System.out.print(">>" + s);
-							// System.out.println("");
-							row = row + 1;
-							if (row == 1)
-								continue;
-							if (row == dataCsv.size())
-								break;
-							// System.out.println("dataCsvRow=" + dataCsvRow.length);
+		Date createDate = Utility.parseDate(dateStr, Constant.DateFormat.ddMMYY);
+		System.out.println("dateStr=" + dateStr + "==" + createDate);
 
-							if (table.getDbTable().equals("CorporateAction")) {
-								String series = dataCsvRow[0];
-								String symbol = dataCsvRow[1];
-								String name = dataCsvRow[2];
-								SecurityMaster sec = null;
-								List<SecurityMaster> secList = securityMasterRepository
-										.findByNameAndSeriesAndSymbol(name, series, symbol);
-								if (secList != null && secList.size() > 0)
-									sec = secList.get(0);
-								else
-									sec = new SecurityMaster(createDate, series, name, symbol);
+		List<String> unZipFileInfolder = file.unZipIt(etlMaster.get("localPath").getValue(), fileName,
+				etlMaster.get("archiveLocalBaseDir").getValue());
+		for (ETLTableMaster table : etlTableMasterList) {
+			if (table.getFileExtension().equals("CSV")) {
+				String csvFile = table.getNseNamePattern().replace("DDMMYY", dateStr);
 
-								CorporateAction ann = new CorporateAction(sec, createDate,
-										Utility.subArray(dataCsvRow, 3));
-								try {
-									corporateActionRepository.save(ann);
-								} catch (Exception e) {
-									System.out.println("222:" + e.getMessage());
-								}
-							}
+				List<String[]> dataCsv = csvReader
+						.makeFileList(etlMaster.get("localPath").getValue() + dir + "/" + csvFile);
+				int row = 0;
+				System.out.println("\n>>dataCsv=" + dataCsv.size());
 
+				for (String[] dataCsvRow : dataCsv) {
+					System.out.print("," + row);
+					// for (String s : dataCsvRow)
+					// System.out.print(">>" + s);
+					// System.out.println("");
+					row = row + 1;
+					if (row == 1)
+						continue;
+					if (row == dataCsv.size())
+						break;
+					// System.out.println("dataCsvRow=" + dataCsvRow.length);
+
+					if (table.getDbTable().equals("CorporateAction")) {
+						try {
+							String series = dataCsvRow[0];
+							String symbol = dataCsvRow[1];
+							String name = dataCsvRow[2];
+							SecurityMaster sec = null;
+							List<SecurityMaster> secList = securityMasterRepository.findByNameAndSeriesAndSymbol(name,
+									series, symbol);
+							if (secList != null && secList.size() > 0)
+								sec = secList.get(0);
 							else
+								sec = new SecurityMaster(createDate, series, name, symbol);
 
-							if (table.getDbTable().equals("CorporateBonds")) {
-								String market = dataCsvRow[0];
-								String series = dataCsvRow[1];
-								String symbol = dataCsvRow[2];
-								String name = dataCsvRow[3];
-								SecurityMaster sec = null;
-								List<SecurityMaster> secList = securityMasterRepository
-										.findByMarketAndNameAndSeriesAndSymbol(market, name, series, symbol);
-								if (secList != null && secList.size() > 0)
-									sec = secList.get(0);
-								else
-									sec = new SecurityMaster(createDate, series, name, symbol, market);
-								CorporateBonds ann = new CorporateBonds(sec, createDate,
-										Utility.subArray(dataCsvRow, 4));
-								try {
-									corporateBondsRepository.save(ann);
-									;
-								} catch (Exception e) {
-									System.out.println("192:" + e.getMessage());
-								}
-							} else if (table.getDbTable().equals("ETF")) {
-								String market = dataCsvRow[0];
-								String series = dataCsvRow[1];
-								String symbol = dataCsvRow[2];
-								String name = dataCsvRow[3];
-								SecurityMaster sec = null;
-								List<SecurityMaster> secList = securityMasterRepository
-										.findByMarketAndNameAndSeriesAndSymbol(market, name, series, symbol);
-								if (secList != null && secList.size() > 0)
-									sec = secList.get(0);
-								else
-									sec = new SecurityMaster(createDate, series, name, symbol, market);
-								Etf ann = new Etf(sec, createDate, Utility.subArray(dataCsvRow, 4));
-								try {
-									etfRepository.save(ann);
-									;
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
-							} else if (table.getDbTable().equals("MarketData")) {
-								String market = dataCsvRow[0];
-								String series = dataCsvRow[1];
-								String symbol = dataCsvRow[2];
-								String name = dataCsvRow[3];
-								SecurityMaster sec = null;
-								List<SecurityMaster> secList = securityMasterRepository
-										.findByMarketAndNameAndSeriesAndSymbol(market, name, series, symbol);
-								if (secList != null && secList.size() > 0)
-									sec = secList.get(0);
-								else
-									sec = new SecurityMaster(createDate, series, name, symbol, market);
-								MarketData ann = new MarketData(sec, createDate, Utility.subArray(dataCsvRow, 4));
-								// System.out.println("an="+ann);
-								try {
-									marketDataRepository.save(ann);
-								} catch (Exception e) {
-									System.out.println("222:" + e.getMessage());
-								}
-							}
+							CorporateAction ann = new CorporateAction(sec, createDate, Utility.subArray(dataCsvRow, 3));
 
+							corporateActionRepository.save(ann);
+						} catch (Exception e) {
+							System.out.println("186:" + e.getMessage());
 						}
-
 					}
-					if (table.getFileExtension().equals("TXT")) {
-						if (table.getDbTable().equals("announcements")) {
-							/*
-							 * SecurityMaster sec=new SecurityMaster(dataCsvRow); Announcements ann=new
-							 * Announcements(createDate,dataCsvRow); announcementsRepository.save(ann);
-							 */} else if (table.getDbTable().equals("BoardMeetings")) {
-							/*
-							 * BoardMeetings ann=new BoardMeetings(dataCsvRow);
-							 * boardMeetingsRepository.save(ann);
-							 */}
+
+					else
+
+					if (table.getDbTable().equals("CorporateBonds")) {
+						try {
+							String market = dataCsvRow[0];
+							String series = dataCsvRow[1];
+							String symbol = dataCsvRow[2];
+							String name = dataCsvRow[3];
+							SecurityMaster sec = null;
+							List<SecurityMaster> secList = securityMasterRepository
+									.findByMarketAndNameAndSeriesAndSymbol(market, name, series, symbol);
+							if (secList != null && secList.size() > 0)
+								sec = secList.get(0);
+							else
+								sec = new SecurityMaster(createDate, series, name, symbol, market);
+							CorporateBonds ann = new CorporateBonds(sec, createDate, Utility.subArray(dataCsvRow, 4));
+
+							corporateBondsRepository.save(ann);
+							;
+						} catch (Exception e) {
+							System.out.println("192:" + e.getMessage());
+						}
+					} else if (table.getDbTable().equals("ETF")) {
+						try {
+							String market = dataCsvRow[0];
+							String series = dataCsvRow[1];
+							String symbol = dataCsvRow[2];
+							String name = dataCsvRow[3];
+							SecurityMaster sec = null;
+							List<SecurityMaster> secList = securityMasterRepository
+									.findByMarketAndNameAndSeriesAndSymbol(market, name, series, symbol);
+							if (secList != null && secList.size() > 0)
+								sec = secList.get(0);
+							else
+								sec = new SecurityMaster(createDate, series, name, symbol, market);
+							Etf ann = new Etf(sec, createDate, Utility.subArray(dataCsvRow, 4));
+
+							etfRepository.save(ann);
+							;
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					} else if (table.getDbTable().equals("MarketData")) {
+						try {
+							String market = dataCsvRow[0];
+							String series = dataCsvRow[1];
+							String symbol = dataCsvRow[2];
+							String name = dataCsvRow[3];
+							SecurityMaster sec = null;
+							List<SecurityMaster> secList = securityMasterRepository
+									.findByMarketAndNameAndSeriesAndSymbol(market, name, series, symbol);
+							if (secList != null && secList.size() > 0)
+								sec = secList.get(0);
+							else
+								sec = new SecurityMaster(createDate, series, name, symbol, market);
+							MarketData ann = new MarketData(sec, createDate, Utility.subArray(dataCsvRow, 4));
+							// System.out.println("an="+ann);
+
+							marketDataRepository.save(ann);
+						} catch (Exception e) {
+							System.out.println("222:" + e.getMessage());
+						}
 					}
 
 				}
-				file.coypFileArchive(etlMaster.get("localPath").getValue(), fileName,
-						etlMaster.get("archiveLocalBaseDir").getValue());
-				System.out.println("end");
-				System.out.println(etlMaster.get("localPath").getValue() + "/" + fileName + "to :"
-						+ etlMaster.get("archiveLocalBaseDir").getValue());
-				
+
 			}
+			if (table.getFileExtension().equals("TXT")) {
+				if (table.getDbTable().equals("announcements")) {
+					/*
+					 * SecurityMaster sec=new SecurityMaster(dataCsvRow); Announcements ann=new
+					 * Announcements(createDate,dataCsvRow); announcementsRepository.save(ann);
+					 */} else if (table.getDbTable().equals("BoardMeetings")) {
+					/*
+					 * BoardMeetings ann=new BoardMeetings(dataCsvRow);
+					 * boardMeetingsRepository.save(ann);
+					 */}
+			}
+
 		}
+		file.coypFileArchive(etlMaster.get("localPath").getValue(), fileName,
+				etlMaster.get("archiveLocalBaseDir").getValue());
+		System.out.println("end");
+		System.out.println(etlMaster.get("localPath").getValue() + "/" + fileName + "to :"
+				+ etlMaster.get("archiveLocalBaseDir").getValue());
 
 	}
+
+	public void download1File() {
+		if (etlMaster == null)
+			loadETLData();
+		int p = 0;
+		// RejectedExecutionHandler implementation
+		RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
+		// Get the ThreadFactory implementation to use
+		ThreadFactory threadFactory = Executors.defaultThreadFactory();
+		// creating the ThreadPoolExecutor
+		/* initial pool size as 2, maximum pool size to 4 and work queue size as 2 */
+		ThreadPoolExecutor executorPool = new ThreadPoolExecutor(1, 2, 10, TimeUnit.SECONDS,
+				new ArrayBlockingQueue<Runnable>(2), threadFactory, rejectionHandler);
+		// start the monitoring thread
+		MyMonitorThread monitor = new MyMonitorThread(executorPool, 10);
+		Thread monitorThread = new Thread(monitor);
+		monitorThread.start();
+		List<String> uniList = new ArrayList<String>();
+		Iterable<SecurityMaster> secqurityMasterList = securityMasterRepository.findBySeriesAndBseIdNotNull("EQ");
+		for (SecurityMaster table : secqurityMasterList) {
+			p = p + 1;
+			System.out.println("i=i=i=" + p);
+			// if(p<199)
+			// continue;
+			if (uniList.contains(table.getBseId()))
+				continue;
+			uniList.add(table.getBseId());
+			ExecutorService executor = Executors.newFixedThreadPool(5);
+			if (table.getBseId() == null)
+				continue;
+			String url = etlMaster.get("SPattern").getValue();
+			for (int i = 95; i < 99; i++) {
+				String url1 = url.replace("SCRIPCODE", table.getBseId()).replace("QTR", "" + i);
+				// url=url+i;
+				System.out.println("table:" + table.getName() + ",url:" + url1);
+				String localPath = etlMaster.get("SPatternBaseDir").getValue() + table.getBseId() + "qtr" + i + ".html";
+				// System.out.println("localPath=" + localPath);
+				Runnable worker = new WorkerThread(url1, localPath);
+				executor.execute(worker);
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		}
+
+		// shut down the pool
+		executorPool.shutdown();
+		// shut down the monitor thread
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		monitor.shutdown();
+	}
+
+	public void download1FinResults() {
+		if (etlMaster == null)
+			loadETLData();
+		int p = 0;
+		// RejectedExecutionHandler implementation
+		RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
+		// Get the ThreadFactory implementation to use
+		ThreadFactory threadFactory = Executors.defaultThreadFactory();
+		// creating the ThreadPoolExecutor
+		/* initial pool size as 2, maximum pool size to 4 and work queue size as 2 */
+		ThreadPoolExecutor executorPool = new ThreadPoolExecutor(1, 2, 10, TimeUnit.SECONDS,
+				new ArrayBlockingQueue<Runnable>(2), threadFactory, rejectionHandler);
+		// start the monitoring thread
+		MyMonitorThread monitor = new MyMonitorThread(executorPool, 10);
+		Thread monitorThread = new Thread(monitor);
+		monitorThread.start();
+		List<String> uniList = new ArrayList<String>();
+		Iterable<SecurityMaster> secqurityMasterList = securityMasterRepository.findBySeriesAndBseIdNotNull("EQ");
+		for (SecurityMaster table : secqurityMasterList) {
+			p = p + 1;
+			System.out.println("i=i=i=" + p);
+			// if(p<199)
+			// continue;
+			if (uniList.contains(table.getBseId()))
+				continue;
+			uniList.add(table.getBseId());
+			ExecutorService executor = Executors.newFixedThreadPool(5);
+			if (table.getBseId() == null)
+				continue;
+			String url = etlMaster.get("SPattern").getValue();
+			for (int i = 90; i < 91; i++) {
+				String url1 = url.replace("SCRIPCODE", table.getBseId()).replace("QTR", "" + i);
+				// url=url+i;
+				System.out.println("table:" + table.getName() + ",url:" + url1);
+				String localPath = etlMaster.get("SPatternBaseDir").getValue() + table.getBseId() + "qtr" + i + ".html";
+				// System.out.println("localPath=" + localPath);
+				Runnable worker = new WorkerThread(url1, localPath);
+				executor.execute(worker);
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		}
+
+		// shut down the pool
+		executorPool.shutdown();
+		// shut down the monitor thread
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		monitor.shutdown();
+	}
+
+	public void calculate() {
+		Iterable<SecurityMaster> secList = securityMasterRepository.findAll();
+		Iterator<SecurityMaster> it = secList.iterator();
+		SecurityMaster secqertyMaster = null;
+		List<MarketData> marketList = null;
+		List<Analytics> list = null;
+		Analytics analytics = null;
+		MarketData mr = null;
+		while (it.hasNext()) {
+			// analyticsRepository
+			secqertyMaster = it.next();
+			if (secqertyMaster.getId() < 2269)
+				continue;
+			System.out.println(secqertyMaster.getId() + ",name=" + secqertyMaster.getName());
+			marketList = marketDataRepository.findBySecurityMasterOrderByCreateDateDesc(secqertyMaster);
+			System.out.println("marketList=" + marketList.size() + " date=" + (new Date()));
+			list = new ArrayList<Analytics>();
+			for (int i = 0; i < marketList.size(); i++) {
+
+				mr = marketList.get(i);
+				analytics = new Analytics(mr.getCreateDate(), mr.getSecurityMaster());
+				// if (i > 1)
+				analytics.setAv3(marketList, i);
+				// if (i > 4)
+				analytics.setAv5(marketList, i);
+				// if (i > 14)
+				analytics.setAv15(marketList, i);
+				// if (i > 29)
+				analytics.setAv30(marketList, i);
+				// if (i > 89)
+				analytics.setAv90(marketList, i);
+				// if (i > 179)
+				analytics.setAv180(marketList, i);
+				// System.out.print(","+i);
+				list.add(analytics);
+			}
+			analyticsRepository.save(list);
+		}
+		System.out.println("done");
+	}
+
+	public void calculateDaily() {
+
+		List<MarketData> marketList = null;
+		List<Analytics> list = null;
+		Analytics analytics = null;
+		MarketData mr = null;
+		System.out.println("aaaaaaaaaaa");
+		Date max = analyticsRepository.findMaxCreateDate();
+		
+		System.out.println("aa=" + max);
+		marketList = marketDataRepository.findCreateDateGreaterThanOrderByCreateDate(max);
+		System.out.println("marketList=" + marketList.size() + " date=" + (new Date()));
+		list = new ArrayList<Analytics>();
+		for (int i = 0; i < marketList.size(); i++) {
+			mr = marketList.get(i);
+			analytics = new Analytics(mr.getCreateDate(), mr.getSecurityMaster());
+			analytics.setAv3(marketList, i);
+			analytics.setAv5(marketList, i);
+			analytics.setAv30(marketList, i);
+			analytics.setAv90(marketList, i);
+			analytics.setAv180(marketList, i);
+			list.add(analytics);
+		}
+		analyticsRepository.save(list);
+
+		System.out.println("done");
+	}
+
 }

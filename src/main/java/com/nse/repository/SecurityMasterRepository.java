@@ -10,4 +10,5 @@ public interface SecurityMasterRepository  extends CrudRepository<SecurityMaster
 List<SecurityMaster>findByNameAndSeriesAndSymbol(String name,String series,String symbol);
 
 List<SecurityMaster> findByMarketAndNameAndSeriesAndSymbol(String market, String name, String series, String symbol);
+List<SecurityMaster> findBySeriesAndBseIdNotNull(String series);
 }

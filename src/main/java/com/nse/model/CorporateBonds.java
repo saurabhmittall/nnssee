@@ -52,7 +52,7 @@ public class CorporateBonds {
 	double lo52wk;
 	@Column(name = "CREATEDATE")
 	Date createDate;
-
+	public CorporateBonds() {}
 	public CorporateBonds(SecurityMaster securityMaster, Date createDate, String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;

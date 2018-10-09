@@ -53,7 +53,7 @@ public class Etf {
 	String unserLying;
 	@Column(name = "CREATEDATE")
 	Date createDate;
-
+	public Etf() {}
 	public Etf(SecurityMaster securityMaster, Date createDate, String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;

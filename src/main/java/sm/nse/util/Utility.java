@@ -176,16 +176,26 @@ public class Utility {
 	public static int parseInteger(String string) {
 		int doub = 0;
 		try {
+			if(string!=null &&!string.trim().equals(""))
+				
 			doub = Integer.parseInt(string);
 		} catch (Exception r) {
+			System.out.println("string="+string);
+			r.printStackTrace();
+			System.exit(0);
 		}
 		return doub;
 	}
 	public static long parseLong(String string) {
 		long doub = 0;
 		try {
+			if(string!=null &&!string.trim().equals(""))
 			doub = Long.parseLong(string);
 		} catch (Exception r) {
+			
+			System.out.println("string="+string);
+			r.printStackTrace();
+			System.exit(0);
 		}
 		return doub;
 	}

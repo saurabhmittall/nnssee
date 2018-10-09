@@ -31,7 +31,8 @@ public class Announcements {
 
 	@Column(name = "CREATEDATE")
 	Date createDate;
-
+	public Announcements()
+	{}
 	public Announcements(SecurityMaster securityMaster, Date createDate, String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;

@@ -50,7 +50,7 @@ public class CorporateAction {
 	Date createDate;
 
 
-
+	public CorporateAction() {}
 	public CorporateAction(SecurityMaster securityMaster,Date createDate,String[] dataCsvRow) {
 		this.securityMaster = securityMaster;
 		this.createDate = createDate;
